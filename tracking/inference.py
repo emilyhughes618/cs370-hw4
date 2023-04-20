@@ -316,7 +316,11 @@ class DiscreteDistribution(dict):
         {}
         """
         "*** YOUR CODE HERE ***"
-        raiseNotDefined()
+        if len(self) == 0:
+            return
+        sum = self.total()
+        for key, value in self.items():
+            self[key] = value / sum
         "*** END YOUR CODE HERE ***"
 
     def sample(self):
@@ -341,7 +345,12 @@ class DiscreteDistribution(dict):
         0.0
         """
         "*** YOUR CODE HERE ***"
-        raiseNotDefined()
+        sampleString = ""
+        for key, value in self.items():
+            sampleString += (key * value)
+        sample = random.sample(sampleString, 1)
+        return sample[0]
+        
         "*** END YOUR CODE HERE ***"
 
 
