@@ -319,6 +319,8 @@ class DiscreteDistribution(dict):
         if len(self) == 0:
             return
         sum = self.total()
+        if sum == 0:
+            return
         for key, value in self.items():
             self[key] = value / sum
         "*** END YOUR CODE HERE ***"
@@ -425,7 +427,6 @@ class InferenceModule:
         Return the probability P(noisyDistance | pacmanPosition, ghostPosition).
         """
         "*** YOUR CODE HERE ***"
-        print("Jail Position:", jailPosition)
         trueDistance = manhattanDistance(pacmanPosition, ghostPosition)
         if noisyDistance == None:
             if ghostPosition == jailPosition:
@@ -548,7 +549,10 @@ class ExactInference(InferenceModule):
         position is known.
         """
         "*** YOUR CODE HERE ***"
-        raiseNotDefined()
+        for position in self.allPositions:
+            probObservationGivenState = self.getObservationProb(observation, gameState.getPacmanPosition(), position, self.getJailPosition())
+            probStategivenPreviousObs = self.beliefs[position]
+            self.beliefs[position] = probObservationGivenState * probStategivenPreviousObs
         "*** END YOUR CODE HERE ***"
         self.beliefs.normalize()
     
