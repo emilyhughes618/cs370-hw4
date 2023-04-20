@@ -42,6 +42,7 @@ class PerceptronModel(object):
         """
         "*** YOUR CODE HERE ***"
 
+
 class RegressionModel(object):
     """
     A neural network model for approximating a function that maps from real
@@ -51,6 +52,15 @@ class RegressionModel(object):
     def __init__(self):
         # Initialize your model parameters here
         "*** YOUR CODE HERE ***"
+        self.hidden_size = 512
+        self.batch_size = 200
+        self.learning_rate = 0.05
+
+        self.w1 = nn.Parameter(1, self.hidden_size)
+        self.b1 = nn.Parameter(1, self.hidden_size)  
+        self.w_out = nn.Parameter(self.hidden_size, 1)
+        self.b_out = nn.Parameter(1, 1)  
+
 
     def run(self, x):
         """
@@ -62,6 +72,10 @@ class RegressionModel(object):
             A node with shape (batch_size x 1) containing predicted y-values
         """
         "*** YOUR CODE HERE ***"
+        x = nn.AddBias(nn.Linear(x, self.w1), self.b1)
+        x = nn.Linear(nn.ReLU(x), self.w_out)
+        x = nn.AddBias(x, self.b_out)
+        return x
 
     def get_loss(self, x, y):
         """
@@ -74,12 +88,32 @@ class RegressionModel(object):
         Returns: a loss node
         """
         "*** YOUR CODE HERE ***"
+        return nn.SquareLoss(self.run(x), y)
 
     def train(self, dataset):
         """
         Trains the model.
         """
         "*** YOUR CODE HERE ***"
+        
+        while True:
+            counter = 0
+            
+            for x, y in dataset.iterate_once(self.batch_size):
+                counter += 1
+
+                gradients = nn.gradients(self.get_loss(x, y), [self.w1, self.b1, self.w_out, self.b_out])
+
+                self.w1.update(gradients[0], -self.learning_rate)
+                self.b1.update(gradients[1], -self.learning_rate)
+                self.w_out.update(gradients[2], -self.learning_rate)
+                self.b_out.update(gradients[3], -self.learning_rate)
+
+            avg_loss = nn.as_scalar(self.get_loss(nn.Constant(dataset.x), nn.Constant(dataset.y)))
+
+            if counter > self.batch_size or avg_loss < 0.02:
+                break
+
 
 class DigitClassificationModel(object):
     """
