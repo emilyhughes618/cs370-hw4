@@ -1,4 +1,6 @@
 import nn
+import math
+
 
 class PerceptronModel(object):
     def __init__(self, dimensions):
@@ -55,7 +57,6 @@ class RegressionModel(object):
         self.hidden_size = 512
         self.batch_size = 200
         self.learning_rate = 0.05
-
         self.w1 = nn.Parameter(1, self.hidden_size)
         self.b1 = nn.Parameter(1, self.hidden_size)  
         self.w_out = nn.Parameter(self.hidden_size, 1)
@@ -65,7 +66,6 @@ class RegressionModel(object):
     def run(self, x):
         """
         Runs the model for a batch of examples.
-
         Inputs:
             x: a node with shape (batch_size x 1)
         Returns:
@@ -80,7 +80,6 @@ class RegressionModel(object):
     def get_loss(self, x, y):
         """
         Computes the loss for a batch of examples.
-
         Inputs:
             x: a node with shape (batch_size x 1)
             y: a node with shape (batch_size x 1), containing the true y-values
@@ -109,10 +108,11 @@ class RegressionModel(object):
                 self.w_out.update(gradients[2], -self.learning_rate)
                 self.b_out.update(gradients[3], -self.learning_rate)
 
-            avg_loss = nn.as_scalar(self.get_loss(nn.Constant(dataset.x), nn.Constant(dataset.y)))
+            loss = nn.as_scalar(self.get_loss(nn.Constant(dataset.x), nn.Constant(dataset.y)))
 
-            if counter > self.batch_size or avg_loss < 0.02:
+            if counter > self.batch_size or loss < 0.02:
                 break
+
 
 
 class DigitClassificationModel(object):
@@ -132,6 +132,14 @@ class DigitClassificationModel(object):
     def __init__(self):
         # Initialize your model parameters here
         "*** YOUR CODE HERE ***"
+        self.hidden_size = 200
+        self.batch_size = 100
+        self.learning_rate = 0.5
+        self.w1 = nn.Parameter(784, self.hidden_size)
+        self.b1 = nn.Parameter(1, self.hidden_size)
+        self.w_out = nn.Parameter(self.hidden_size, 10)
+        self.b_out = nn.Parameter(1, 10)
+
 
     def run(self, x):
         """
@@ -148,6 +156,13 @@ class DigitClassificationModel(object):
                 (also called logits)
         """
         "*** YOUR CODE HERE ***"
+        x = nn.AddBias(nn.Linear(x, self.w1), self.b1)
+        x = nn.Linear(nn.ReLU(x), self.w_out)
+        x = nn.AddBias(x, self.b_out)
+        
+        return x
+
+
 
     def get_loss(self, x, y):
         """
@@ -163,12 +178,28 @@ class DigitClassificationModel(object):
         Returns: a loss node
         """
         "*** YOUR CODE HERE ***"
+        return nn.SoftmaxLoss(self.run(x), y)
+
 
     def train(self, dataset):
         """
         Trains the model.
         """
         "*** YOUR CODE HERE ***"
+        while True:
+            counter = 0
+            
+            for x, y in dataset.iterate_once(self.batch_size):
+                counter += 1
+                gradients = nn.gradients(self.get_loss(x, y), [self.w1, self.b1, self.w_out, self.b_out])
+
+                self.w1.update(gradients[0], -self.learning_rate)
+                self.b1.update(gradients[1], -self.learning_rate)
+                self.w_out.update(gradients[2],-self.learning_rate)
+                self.b_out.update(gradients[3], -self.learning_rate)
+
+            if  dataset.get_validation_accuracy() > 0.972:
+                break
 
 class LanguageIDModel(object):
     """
